@@ -43,4 +43,21 @@ class TestCase extends \PHPUnit\Framework\TestCase
         $user2 = $db->table('users')->find(2);
         $this->assertEquals(2, $user2['id']);
     }
+
+    /**
+     * @throws Exception
+     */
+    public function testInsert(): void
+    {
+        $db = new Db($this->pdo());
+//        $result = $db->table('users')->insert([
+//            'username' => 'test' . random_int(1000, 9999)
+//        ]);
+//        $this->assertEquals(true, $result);
+
+        $result = $db->table('users')->insert([
+            'username' => 'test' . random_int(1000, 9999)
+        ]);
+        $this->assertIsNumeric($result);
+    }
 }

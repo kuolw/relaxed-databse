@@ -55,4 +55,38 @@ class Db
         $statement->execute();
         return $statement->fetch(PDO::FETCH_ASSOC);
     }
+
+    public function insert($data)
+    {
+        $keys = $values = $binds = [];
+        foreach ($data as $key => $value) {
+            $keys[] = $key;
+            $values[] = '?';
+            $binds[] = $value;
+        }
+
+        $keysSql = implode(',', $keys);
+        $valueSql = implode(',', $values);
+
+        $sql = 'insert into' . " $this->table ($keysSql) values ($valueSql)";
+        $statement = $this->pdo->prepare($sql);
+        foreach ($binds as $key => $value) {
+            $statement->bindValue(
+                is_string($key) ? $key : $key + 1,
+                $value,
+                is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR
+            );
+        }
+        return $statement->execute();
+    }
+
+    /**
+     * @param $data
+     * @return int
+     */
+    public function insertGetId($data): int
+    {
+        $this->insert($data);
+        return (int)$this->pdo->lastInsertId();
+    }
 }
