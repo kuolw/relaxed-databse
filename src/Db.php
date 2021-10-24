@@ -33,4 +33,26 @@ class Db
         $statement = $this->pdo->query($sql);
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    /**
+     * @return array|false
+     */
+    public function first(): bool|array
+    {
+        $sql = 'select * from ' . $this->table . ' limit 1';
+        $statement = $this->pdo->query($sql);
+        return $statement->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * @return array|false
+     */
+    public function find($id): bool|array
+    {
+        $sql = 'select * from' . " $this->table where `id` = ? limit 1";
+        $statement = $this->pdo->prepare($sql);
+        $statement->bindValue(1, $id, PDO::PARAM_INT);
+        $statement->execute();
+        return $statement->fetch(PDO::FETCH_ASSOC);
+    }
 }

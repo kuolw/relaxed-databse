@@ -22,8 +22,25 @@ class TestCase extends \PHPUnit\Framework\TestCase
     {
         $db = new Db($this->pdo());
         $result = $db->table('users')->get();
-        $this->assertIsArray($result);
 
-        $this->assertEquals(['id' => 1, 'username' => 'admin', 'password' => 123456], $result[0]);
+        $this->assertIsArray($result);
+    }
+
+    public function testFirst(): void
+    {
+        $db = new Db($this->pdo());
+        $result = $db->table('users')->first();
+
+        $this->assertEquals(1, $result['id']);
+    }
+
+    public function testFind(): void
+    {
+        $db = new Db($this->pdo());
+        $user1 = $db->table('users')->find(1);
+        $this->assertEquals(1, $user1['id']);
+
+        $user2 = $db->table('users')->find(2);
+        $this->assertEquals(2, $user2['id']);
     }
 }
