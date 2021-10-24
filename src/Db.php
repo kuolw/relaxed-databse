@@ -56,7 +56,11 @@ class Db
         return $statement->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function insert($data)
+    /**
+     * @param $data
+     * @return bool
+     */
+    public function insert($data): bool
     {
         $keys = $values = $binds = [];
         foreach ($data as $key => $value) {

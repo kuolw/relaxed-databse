@@ -50,11 +50,6 @@ class TestCase extends \PHPUnit\Framework\TestCase
     public function testInsert(): void
     {
         $db = new Db($this->pdo());
-//        $result = $db->table('users')->insert([
-//            'username' => 'test' . random_int(1000, 9999)
-//        ]);
-//        $this->assertEquals(true, $result);
-
         $result = $db->table('users')->insert([
             'username' => 'test' . random_int(1000, 9999)
         ]);
