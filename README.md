@@ -29,6 +29,11 @@ $db->table('users')->find(1);
 ```
 Db::table('users')->where('username', '=', 'admin')->first();
 Db::table('users')->where('password', '=', '123456')->get();
+
+$db->table('users')
+    ->where('username', '=', 'admin')
+    ->orWheRe('username', '=', 'test1')
+    ->get();
 ```
 
 ## 插入

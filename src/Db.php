@@ -110,6 +110,19 @@ class Db
         return $this;
     }
 
+    /**
+     * @param $field
+     * @param $operator
+     * @param $value
+     * @return Db
+     */
+    public function orWhere($field, $operator, $value): static
+    {
+        $this->wheres[] = ['or', $field, $operator];
+        $this->binds[] = $value;
+        return $this;
+    }
+
     //endregion
 
     //region 构造解析器

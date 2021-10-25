@@ -44,6 +44,29 @@ class TestCase extends \PHPUnit\Framework\TestCase
         $this->assertEquals(2, $user2['id']);
     }
 
+    public function testWhere(): void
+    {
+        $db = new Db($this->pdo());
+        $result = $db->table('users')->where('username', '=', 'admin')->first();
+        $this->assertEquals('admin', $result['username']);
+
+        $db = new Db($this->pdo());
+        $result = $db->table('users')->where('password', '=', '123456')->get();
+        $this->assertIsArray($result);
+    }
+
+    public function testOrWhere(): void
+    {
+        $db = new Db($this->pdo());
+        $result = $db->table('users')
+            ->where('username', '=', 'admin')
+            ->orWheRe('username', '=', 'test1')
+            ->get();
+        $this->assertIsArray($result);
+        $this->assertEquals('admin', $result[0]['username']);
+        $this->assertEquals('test1', $result[1]['username']);
+    }
+
     /**
      * @throws Exception
      */
@@ -59,16 +82,5 @@ class TestCase extends \PHPUnit\Framework\TestCase
             'username' => 'test' . random_int(1000, 9999)
         ]);
         $this->assertIsNumeric($result);
-    }
-
-    public function testWhere(): void
-    {
-        $db = new Db($this->pdo());
-        $result = $db->table('users')->where('username', '=', 'admin')->first();
-        $this->assertEquals('admin', $result['username']);
-
-        $db = new Db($this->pdo());
-        $result = $db->table('users')->where('password', '=', '123456')->get();
-        $this->assertIsArray($result);
     }
 }
