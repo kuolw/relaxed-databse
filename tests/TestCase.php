@@ -83,4 +83,11 @@ class TestCase extends \PHPUnit\Framework\TestCase
         ]);
         $this->assertIsNumeric($result);
     }
+
+    public function testDebug(): void
+    {
+        $db = new Db($this->pdo());
+        $result = $db->table('users')->where('username', '=', 'admin')->debug()->first();
+        $this->assertEquals('admin', $result['username']);
+    }
 }

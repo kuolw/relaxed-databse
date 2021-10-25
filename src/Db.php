@@ -15,6 +15,7 @@ class Db
 
     private string $table;
 
+
     /**
      * @param string $name
      * @return $this
@@ -92,6 +93,17 @@ class Db
         return (int)$this->pdo->lastInsertId();
     }
 
+    private bool $debug = false;
+
+    /**
+     * @return $this
+     */
+    public function debug(): static
+    {
+        $this->debug = true;
+        return $this;
+    }
+
     // region 查询构造器
 
     private array $wheres = [];
@@ -162,6 +174,11 @@ class Db
         foreach ($binds as $i => $value) {
             $statement->bindValue($i + 1, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
         }
+
+        if ($this->debug) {
+            var_dump(compact('sql', 'binds'));
+        }
+
         $statement->execute();
         return $statement;
     }

@@ -53,3 +53,12 @@ $db->table('users')->insertGetId([
     'password' => 123456,
 ]);
 ```
+
+## SQL 调试
+
+```
+$db->table('users')
+    ->where('username', '=', 'admin')
+    ->debug()
+    ->first();
+```
