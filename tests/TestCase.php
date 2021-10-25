@@ -53,6 +53,22 @@ class TestCase extends \PHPUnit\Framework\TestCase
         $result = $db->table('users')->insert([
             'username' => 'test' . random_int(1000, 9999)
         ]);
+        $this->assertEquals(true, $result);
+
+        $result = $db->table('users')->insertGetId([
+            'username' => 'test' . random_int(1000, 9999)
+        ]);
         $this->assertIsNumeric($result);
+    }
+
+    public function testWhere(): void
+    {
+        $db = new Db($this->pdo());
+        $result = $db->table('users')->where('username', '=', 'admin')->first();
+        $this->assertEquals('admin', $result['username']);
+
+        $db = new Db($this->pdo());
+        $result = $db->table('users')->where('password', '=', '123456')->get();
+        $this->assertIsArray($result);
     }
 }

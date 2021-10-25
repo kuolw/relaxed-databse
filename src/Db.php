@@ -3,6 +3,7 @@
 namespace Relaxed\Database;
 
 use PDO;
+use PDOStatement;
 
 class Db
 {
@@ -29,9 +30,9 @@ class Db
      */
     public function get(): bool|array
     {
-        $sql = 'select * from ' . $this->table;
-        $statement = $this->pdo->query($sql);
-        return $statement->fetchAll(PDO::FETCH_ASSOC);
+        $whereSql = $this->parseWhere();
+        $sql = 'select * from' . " $this->table $whereSql";
+        return $this->fetchAll($sql, $this->binds);
     }
 
     /**
@@ -39,9 +40,9 @@ class Db
      */
     public function first(): bool|array
     {
-        $sql = 'select * from ' . $this->table . ' limit 1';
-        $statement = $this->pdo->query($sql);
-        return $statement->fetch(PDO::FETCH_ASSOC);
+        $whereSql = $this->parseWhere();
+        $sql = 'select * from' . " $this->table $whereSql limit 1";
+        return $this->fetch($sql, $this->binds);
     }
 
     /**
@@ -49,11 +50,8 @@ class Db
      */
     public function find($id): bool|array
     {
-        $sql = 'select * from' . " $this->table where `id` = ? limit 1";
-        $statement = $this->pdo->prepare($sql);
-        $statement->bindValue(1, $id, PDO::PARAM_INT);
-        $statement->execute();
-        return $statement->fetch(PDO::FETCH_ASSOC);
+        $sql = 'select * from' . " $this->table where `id` = ?";
+        return $this->fetch($sql, [$id]);
     }
 
     /**
@@ -93,4 +91,89 @@ class Db
         $this->insert($data);
         return (int)$this->pdo->lastInsertId();
     }
+
+    // region 查询构造器
+
+    private array $wheres = [];
+    private array $binds = [];
+
+    /**
+     * @param $field
+     * @param $operator
+     * @param $value
+     * @return Db
+     */
+    public function where($field, $operator, $value): static
+    {
+        $this->wheres[] = ['and', $field, $operator];
+        $this->binds[] = $value;
+        return $this;
+    }
+
+    //endregion
+
+    //region 构造解析器
+
+    /**
+     * @return string
+     */
+    private function parseWhere(): string
+    {
+        if (empty($this->wheres)) {
+            return '';
+        }
+
+        $sql = 'where';
+        foreach ($this->wheres as $i => [$boolean, $field, $operator]) {
+            if ($i) {
+                $sql .= " $boolean `$field` $operator ?";
+            } else {
+                $sql .= " `$field` $operator ?";
+            }
+        }
+        return $sql;
+    }
+
+    //endregion
+
+    //region 语句执行器
+
+    /**
+     * @param $sql
+     * @param $binds
+     * @return PDOStatement
+     */
+    public function execute($sql, $binds): PDOStatement
+    {
+        $statement = $this->pdo->prepare($sql);
+        foreach ($binds as $i => $value) {
+            $statement->bindValue($i + 1, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
+        }
+        $statement->execute();
+        return $statement;
+    }
+
+    /**
+     * @param $sql
+     * @param $binds
+     * @return bool|array
+     */
+    public function fetch($sql, $binds): bool|array
+    {
+        $statement = $this->execute($sql, $binds);
+        return $statement->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * @param $sql
+     * @param $binds
+     * @return array|false
+     */
+    public function fetchAll($sql, $binds): bool|array
+    {
+        $statement = $this->execute($sql, $binds);
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    //endregion
 }
