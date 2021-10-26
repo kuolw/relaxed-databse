@@ -84,6 +84,20 @@ class TestCase extends \PHPUnit\Framework\TestCase
         $this->assertIsNumeric($result);
     }
 
+    public function testDelete(): void
+    {
+        $db = new Db($this->pdo());
+        $result = $db->table('users')->where('id', '>', 10)->delete();
+        $this->assertEquals(true, $result);
+    }
+
+    public function testTruncate(): void
+    {
+        $db = new Db($this->pdo());
+        $result = $db->table('users')->truncate();
+        $this->assertEquals(true, $result);
+    }
+
     public function testDebug(): void
     {
         $db = new Db($this->pdo());

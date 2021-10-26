@@ -54,6 +54,18 @@ $db->table('users')->insertGetId([
 ]);
 ```
 
+## 删除
+
+```
+$db->table('users')->where('id', '>', 10)->delete();
+```
+
+### 清空表
+
+```
+$db->table('users')->truncate();
+```
+
 ## SQL 调试
 
 ```

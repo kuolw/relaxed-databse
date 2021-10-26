@@ -93,6 +93,26 @@ class Db
         return (int)$this->pdo->lastInsertId();
     }
 
+    /**
+     * @return bool
+     */
+    public function delete(): bool
+    {
+        $whereSql = $this->parseWhere();
+        $sql = 'delete from' . " $this->table $whereSql";
+        $statement = $this->statement($sql, $this->binds);
+        return $statement->execute();
+    }
+
+    /**
+     * @return bool
+     */
+    public function truncate(): bool
+    {
+        $sql = "truncate table $this->table";
+        return $this->execute($sql);
+    }
+
     private bool $debug = false;
 
     /**
@@ -164,23 +184,36 @@ class Db
     //region 语句执行器
 
     /**
+     * 生成预处理语句
      * @param $sql
      * @param $binds
-     * @return PDOStatement
+     * @return false|PDOStatement
      */
-    public function execute($sql, $binds): PDOStatement
+    public function statement($sql, $binds = null): bool|PDOStatement
     {
         $statement = $this->pdo->prepare($sql);
-        foreach ($binds as $i => $value) {
-            $statement->bindValue($i + 1, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
+        if ($binds) {
+            foreach ($binds as $i => $value) {
+                $statement->bindValue($i + 1, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
+            }
         }
 
         if ($this->debug) {
             var_dump(compact('sql', 'binds'));
         }
 
-        $statement->execute();
         return $statement;
+    }
+
+    /**
+     * @param $sql
+     * @param null $binds
+     * @return bool
+     */
+    public function execute($sql, $binds = null): bool
+    {
+        $statement = $this->statement($sql, $binds);
+        return $statement->execute();
     }
 
     /**
@@ -190,7 +223,8 @@ class Db
      */
     public function fetch($sql, $binds): bool|array
     {
-        $statement = $this->execute($sql, $binds);
+        $statement = $this->statement($sql, $binds);
+        $statement->execute();
         return $statement->fetch(PDO::FETCH_ASSOC);
     }
 
@@ -201,7 +235,8 @@ class Db
      */
     public function fetchAll($sql, $binds): bool|array
     {
-        $statement = $this->execute($sql, $binds);
+        $statement = $this->statement($sql, $binds);
+        $statement->execute();
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
