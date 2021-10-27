@@ -32,7 +32,7 @@ class Db
     public function get(): bool|array
     {
         $whereSql = $this->parseWhere();
-        $sql = 'select * from' . " $this->table $whereSql";
+        $sql = 'select * from' . " $this->table $whereSql;";
         return $this->fetchAll($sql, $this->binds);
     }
 
@@ -42,7 +42,7 @@ class Db
     public function first(): bool|array
     {
         $whereSql = $this->parseWhere();
-        $sql = 'select * from' . " $this->table $whereSql limit 1";
+        $sql = 'select * from' . " $this->table $whereSql limit 1;";
         return $this->fetch($sql, $this->binds);
     }
 
@@ -51,7 +51,7 @@ class Db
      */
     public function find($id): bool|array
     {
-        $sql = 'select * from' . " $this->table where `id` = ?";
+        $sql = 'select * from' . " $this->table where `id` = ?;";
         return $this->fetch($sql, [$id]);
     }
 
@@ -71,15 +71,8 @@ class Db
         $keysSql = implode(',', $keys);
         $valueSql = implode(',', $values);
 
-        $sql = 'insert into' . " $this->table ($keysSql) values ($valueSql)";
-        $statement = $this->pdo->prepare($sql);
-        foreach ($binds as $key => $value) {
-            $statement->bindValue(
-                is_string($key) ? $key : $key + 1,
-                $value,
-                is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR
-            );
-        }
+        $sql = 'insert into' . " $this->table ($keysSql) values ($valueSql);";
+        $statement = $this->statement($sql, $binds);
         return $statement->execute();
     }
 
@@ -94,12 +87,32 @@ class Db
     }
 
     /**
+     * @param $data
+     * @return bool
+     */
+    public function update($data): bool
+    {
+        $sets = $binds = [];
+        foreach ($data as $key => $value) {
+            $sets[] = "$key=?";
+            $binds[] = $value;
+        }
+
+        $setSql = implode(',', $sets);
+        $whereSql = $this->parseWhere();
+
+        $sql = 'update' . " $this->table set $setSql $whereSql;";
+        $statement = $this->statement($sql, array_merge($binds, $this->binds));
+        return $statement->execute();
+    }
+
+    /**
      * @return bool
      */
     public function delete(): bool
     {
         $whereSql = $this->parseWhere();
-        $sql = 'delete from' . " $this->table $whereSql";
+        $sql = 'delete from' . " $this->table $whereSql;";
         $statement = $this->statement($sql, $this->binds);
         return $statement->execute();
     }
@@ -109,7 +122,7 @@ class Db
      */
     public function truncate(): bool
     {
-        $sql = "truncate table $this->table";
+        $sql = "truncate table $this->table;";
         return $this->execute($sql);
     }
 

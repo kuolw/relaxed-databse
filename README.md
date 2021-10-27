@@ -26,7 +26,7 @@ $db->table('users')->find(1);
 
 ### Where
 
-```
+```php
 Db::table('users')->where('username', '=', 'admin')->first();
 Db::table('users')->where('password', '=', '123456')->get();
 
@@ -38,7 +38,7 @@ $db->table('users')
 
 ## 插入
 
-```
+```php
 $db->table('users')->insert([
     'username' => 'test',
     'password' => 123456,
@@ -47,28 +47,38 @@ $db->table('users')->insert([
 
 ### 自增 ID
 
-```
+```php
 $db->table('users')->insertGetId([
     'username' => 'test',
     'password' => 123456,
 ]);
 ```
 
+## 更新
+
+```php
+$db->table('users')
+    ->where('id', '=', 3)
+    ->update([
+        'username' => 'test' . random_int(1000, 9999)
+    ]);
+```
+
 ## 删除
 
-```
+```php
 $db->table('users')->where('id', '>', 10)->delete();
 ```
 
 ### 清空表
 
-```
+```php
 $db->table('users')->truncate();
 ```
 
 ## SQL 调试
 
-```
+```php
 $db->table('users')
     ->where('username', '=', 'admin')
     ->debug()

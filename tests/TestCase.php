@@ -84,6 +84,20 @@ class TestCase extends \PHPUnit\Framework\TestCase
         $this->assertIsNumeric($result);
     }
 
+    /**
+     * @throws Exception
+     */
+    public function testUpdate(): void
+    {
+        $db = new Db($this->pdo());
+        $result = $db->table('users')
+            ->where('id', '=', 3)
+            ->update([
+                'username' => 'test' . random_int(1000, 9999)
+            ]);
+        $this->assertEquals(true, $result);
+    }
+
     public function testDelete(): void
     {
         $db = new Db($this->pdo());
