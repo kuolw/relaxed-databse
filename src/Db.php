@@ -31,7 +31,13 @@ class Db
      */
     public function get(): bool|array
     {
-        $sql = $this->fullSql('select * from', ['where', 'limit', 'offset']);
+        $sql = $this->compileSql([
+            $this->compileSelect($this->fields),
+            $this->compileFrom($this->table),
+            $this->compileWhere($this->wheres),
+            $this->parseLimit(),
+            $this->parseOffset()
+        ]);
         return $this->fetchAll($sql, $this->binds);
     }
 
@@ -40,7 +46,12 @@ class Db
      */
     public function first(): bool|array
     {
-        $sql = $this->fullSql('select * from', ['where'], ' limit 1;');
+        $sql = $this->compileSql([
+            $this->compileSelect($this->fields),
+            $this->compileFrom($this->table),
+            $this->compileWhere($this->wheres),
+            'limit 1'
+        ]);
         return $this->fetch($sql, $this->binds);
     }
 
@@ -98,7 +109,7 @@ class Db
         }
 
         $setSql = implode(',', $sets);
-        $whereSql = $this->parseWhere();
+        $whereSql = $this->compileWhere($this->wheres);
 
         $sql = 'update' . " $this->table set $setSql $whereSql;";
         $statement = $this->statement($sql, array_merge($binds, $this->binds));
@@ -110,7 +121,7 @@ class Db
      */
     public function delete(): bool
     {
-        $whereSql = $this->parseWhere();
+        $whereSql = $this->compileWhere($this->wheres);
         $sql = 'delete from' . " $this->table $whereSql;";
         $statement = $this->statement($sql, $this->binds);
         return $statement->execute();
@@ -137,6 +148,18 @@ class Db
     }
 
     // region 查询构造器
+
+    private array $fields = [];
+
+    /**
+     * @param array $value
+     * @return $this
+     */
+    public function select(...$value): static
+    {
+        $this->fields = $value;
+        return $this;
+    }
 
     private array $wheres = [];
     private array $binds = [];
@@ -196,44 +219,6 @@ class Db
     //region 构造解析器
 
     /**
-     * @param string $sql
-     * @param array $components
-     * @param string $over
-     * @return string
-     */
-    private function fullSql(string $sql, array $components, string $over = ';'): string
-    {
-        $sqlArr = [$sql, $this->table];
-        foreach ($components as $component) {
-            $method = 'parse' . ucfirst($component);
-            if ($componentSql = $this->$method()) {
-                $sqlArr[] = $componentSql;
-            }
-        }
-        return implode(' ', $sqlArr) . $over;
-    }
-
-    /**
-     * @return string
-     */
-    private function parseWhere(): string
-    {
-        if (empty($this->wheres)) {
-            return '';
-        }
-
-        $sql = 'where';
-        foreach ($this->wheres as $i => [$boolean, $field, $operator]) {
-            if ($i) {
-                $sql .= " $boolean `$field` $operator ?";
-            } else {
-                $sql .= " `$field` $operator ?";
-            }
-        }
-        return $sql;
-    }
-
-    /**
      * @return string
      */
     private function parseLimit(): string
@@ -254,6 +239,65 @@ class Db
         }
         return 'offset ' . $this->offset;
     }
+    //endregion
+
+    // region 语法编译器
+
+    /**
+     * @param array $grammars
+     * @return string
+     */
+    private function compileSql(array $grammars = []): string
+    {
+        return implode(' ', array_filter($grammars, static function ($value) {
+                return !empty($value);
+            })) . ';';
+    }
+
+    /**
+     * @param array $fields
+     * @return string
+     */
+    private function compileSelect(array $fields = []): string
+    {
+        if (empty($fields)) {
+            return 'select *';
+        }
+        return 'select ' . implode(', ', array_map(static function ($value) {
+                return "`$value`";
+            }, $fields));
+    }
+
+    /**
+     * @param $table
+     * @return string
+     */
+    private function compileFrom($table): string
+    {
+        return "from `$table`";
+    }
+
+    /**
+     * @param $wheres
+     * @return string
+     */
+    private function compileWhere($wheres): string
+    {
+        if (empty($wheres)) {
+            return '';
+        }
+
+        $grammars = [];
+        foreach ($this->wheres as $i => [$boolean, $field, $operator]) {
+            if ($i) {
+                $grammars[] = "$boolean `$field` $operator ?";
+            } else {
+                $grammars[] = "`$field` $operator ?";
+            }
+        }
+        return 'where ' . implode(' ', $grammars);
+    }
+
     //endregion
 
     //region 语句执行器

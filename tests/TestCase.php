@@ -47,11 +47,20 @@ class TestCase extends \PHPUnit\Framework\TestCase
     public function testWhere(): void
     {
         $db = new Db($this->pdo());
-        $result = $db->table('users')->where('username', '=', 'admin')->first();
+        $result = $db->table('users')
+            ->select('id', 'username')
+            ->where('id', '=', 1)
+            ->where('username', '=', 'admin')
+            ->debug()
+            ->first();
+        var_dump($result);
         $this->assertEquals('admin', $result['username']);
 
         $db = new Db($this->pdo());
-        $result = $db->table('users')->where('password', '=', '123456')->get();
+        $result = $db->table('users')
+            ->where('password', '=', '123456')
+            ->debug()
+            ->get();
         $this->assertIsArray($result);
     }
 
