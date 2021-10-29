@@ -29,9 +29,9 @@ class TestCase extends \PHPUnit\Framework\TestCase
     public function testFirst(): void
     {
         $db = new Db($this->pdo());
-        $result = $db->table('users')->first();
+        $result = $db->table('users')->where('id', '>', 1)->first();
 
-        $this->assertEquals(1, $result['id']);
+        $this->assertEquals(2, $result['id']);
     }
 
     public function testFind(): void
@@ -60,11 +60,25 @@ class TestCase extends \PHPUnit\Framework\TestCase
         $db = new Db($this->pdo());
         $result = $db->table('users')
             ->where('username', '=', 'admin')
-            ->orWheRe('username', '=', 'test1')
+            ->orWheRe('username', '=', 'test')
             ->get();
         $this->assertIsArray($result);
         $this->assertEquals('admin', $result[0]['username']);
-        $this->assertEquals('test1', $result[1]['username']);
+        $this->assertEquals('test', $result[1]['username']);
+    }
+
+    public function testLimit(): void
+    {
+        $db = new Db($this->pdo());
+        $result = $db->table('users')->limit(3)->get();
+        $this->assertCount(3, $result);
+    }
+
+    public function testOffset(): void
+    {
+        $db = new Db($this->pdo());
+        $result = $db->table('users')->offset(1)->limit(1)->get();
+        $this->assertEquals('test', $result[0]['username']);
     }
 
     /**

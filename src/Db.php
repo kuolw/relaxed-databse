@@ -31,8 +31,7 @@ class Db
      */
     public function get(): bool|array
     {
-        $whereSql = $this->parseWhere();
-        $sql = 'select * from' . " $this->table $whereSql;";
+        $sql = $this->fullSql('select * from', ['where', 'limit', 'offset']);
         return $this->fetchAll($sql, $this->binds);
     }
 
@@ -41,15 +40,15 @@ class Db
      */
     public function first(): bool|array
     {
-        $whereSql = $this->parseWhere();
-        $sql = 'select * from' . " $this->table $whereSql limit 1;";
+        $sql = $this->fullSql('select * from', ['where'], ' limit 1;');
         return $this->fetch($sql, $this->binds);
     }
 
     /**
-     * @return array|false
+     * @param $id
+     * @return bool|array|Model
      */
-    public function find($id): bool|array
+    public function find($id): bool|array|Model
     {
         $sql = 'select * from' . " $this->table where `id` = ?;";
         return $this->fetch($sql, [$id]);
@@ -168,9 +167,51 @@ class Db
         return $this;
     }
 
+    private int $limit;
+
+    /**
+     * @param $value
+     * @return $this
+     */
+    public function limit($value): static
+    {
+        $this->limit = $value;
+        return $this;
+    }
+
+    private int $offset;
+
+    /**
+     * @param $value
+     * @return $this
+     */
+    public function offset($value): static
+    {
+        $this->offset = $value;
+        return $this;
+    }
+
     //endregion
 
     //region 构造解析器
+
+    /**
+     * @param string $sql
+     * @param array $components
+     * @param string $over
+     * @return string
+     */
+    private function fullSql(string $sql, array $components, string $over = ';'): string
+    {
+        $sqlArr = [$sql, $this->table];
+        foreach ($components as $component) {
+            $method = 'parse' . ucfirst($component);
+            if ($componentSql = $this->$method()) {
+                $sqlArr[] = $componentSql;
+            }
+        }
+        return implode(' ', $sqlArr) . $over;
+    }
 
     /**
      * @return string
@@ -192,6 +233,27 @@ class Db
         return $sql;
     }
 
+    /**
+     * @return string
+     */
+    private function parseLimit(): string
+    {
+        if (empty($this->limit)) {
+            return '';
+        }
+        return 'limit ' . $this->limit;
+    }
+
+    /**
+     * @return string
+     */
+    private function parseOffset(): string
+    {
+        if (empty($this->offset)) {
+            return '';
+        }
+        return 'offset ' . $this->offset;
+    }
     //endregion
 
     //region 语句执行器
@@ -232,9 +294,9 @@ class Db
     /**
      * @param $sql
      * @param $binds
-     * @return bool|array
+     * @return bool|array|Model
      */
-    public function fetch($sql, $binds): bool|array
+    public function fetch($sql, $binds): bool|array|Model
     {
         $statement = $this->statement($sql, $binds);
         $statement->execute();
